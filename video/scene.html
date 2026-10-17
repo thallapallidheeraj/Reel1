@@ -4,191 +4,241 @@
 <meta charset="utf-8">
 <title>Customise Lab UGC</title>
 <!--
-  30s vertical (1080x1920) UGC-style screen-recording walkthrough:
-  home -> pick a tee -> pick colour -> upload company logo -> position it
-  -> choose team sizes -> add to cart -> end card.
+  28s vertical (1080x1920) UGC-style screen-recording walkthrough, styled after customiselab.com.au:
+  home carousel -> Cotton Tee page -> pick colour -> upload company logo -> drag / resize / centre on canvas
+  -> pick size -> add to cart -> end card.
   Everything is driven by window.render(t) so frames are deterministic.
+  window.TIMELINE exposes the voiceover lines and SFX cues used by voice.py / audio.py.
 -->
 <style>
+  @font-face { font-family: Cormorant; font-weight: 500; font-style: normal; src: url(fonts/cormorant-garamond-latin-500-normal.woff2); }
+  @font-face { font-family: Cormorant; font-weight: 600; font-style: normal; src: url(fonts/cormorant-garamond-latin-600-normal.woff2); }
+  @font-face { font-family: Cormorant; font-weight: 500; font-style: italic; src: url(fonts/cormorant-garamond-latin-500-italic.woff2); }
+  @font-face { font-family: Cormorant; font-weight: 600; font-style: italic; src: url(fonts/cormorant-garamond-latin-600-italic.woff2); }
+  @font-face { font-family: Montserrat; font-weight: 400; src: url(fonts/montserrat-latin-400-normal.woff2); }
+  @font-face { font-family: Montserrat; font-weight: 500; src: url(fonts/montserrat-latin-500-normal.woff2); }
+  @font-face { font-family: Montserrat; font-weight: 600; src: url(fonts/montserrat-latin-600-normal.woff2); }
+  @font-face { font-family: Montserrat; font-weight: 700; src: url(fonts/montserrat-latin-700-normal.woff2); }
+  @font-face { font-family: Montserrat; font-weight: 800; src: url(fonts/montserrat-latin-800-normal.woff2); }
+
   :root {
-    --brand: #ff5a36;
-    --brand-dark: #e2401d;
+    --cream: #f6f2ea;
+    --beige: #e6dccb;
     --ink: #141414;
-    --muted: #6b6b6b;
-    --line: #e7e3dd;
-    --soft: #f6f2ec;
+    --muted: #5d5a55;
+    --line: #dcd5c8;
+    --gold: #b8963e;
+    --gold-soft: #d8bd78;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
-  body { font-family: Inter, "Noto Color Emoji", sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+  body { font-family: Montserrat, "Noto Color Emoji", sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+  .serif { font-family: Cormorant, serif; }
+  .caps { text-transform: uppercase; letter-spacing: .22em; }
 
-  #stage { position: absolute; inset: 0; overflow: hidden; background: #fff; }
+  #stage { position: absolute; inset: 0; overflow: hidden; background: var(--cream); }
 
   /* phone chrome */
-  #status { position: absolute; top: 0; left: 0; right: 0; height: 64px; display: flex; align-items: center;
-            justify-content: space-between; padding: 0 48px; font-weight: 700; font-size: 30px; background: #fff; z-index: 5; }
-  #status .icons { display: flex; gap: 14px; align-items: center; }
-  #status .bat { width: 50px; height: 24px; border: 3px solid #111; border-radius: 7px; position: relative; }
-  #status .bat::after { content: ""; position: absolute; inset: 3px; width: 70%; background: #111; border-radius: 3px; }
-  #urlbar { position: absolute; top: 64px; left: 0; right: 0; height: 110px; background: #fff; z-index: 5;
-            display: flex; align-items: center; padding: 0 32px; border-bottom: 2px solid var(--line); }
-  #urlbar .pill { flex: 1; height: 76px; background: #f0f0f2; border-radius: 38px; display: flex; align-items: center;
-                  justify-content: center; gap: 14px; font-size: 32px; color: #333; }
-  #urlbar .lock { width: 22px; height: 26px; border: 4px solid #555; border-radius: 4px; position: relative; top: 4px; }
-  #urlbar .lock::before { content: ""; position: absolute; left: 1px; top: -16px; width: 12px; height: 12px;
-                          border: 4px solid #555; border-bottom: none; border-radius: 10px 10px 0 0; }
-  #url b { color: #111; }
+  #status { position: absolute; top: 0; left: 0; right: 0; height: 64px; display: flex; align-items: center; z-index: 12;
+            justify-content: space-between; padding: 0 60px 0 150px; font-weight: 700; font-size: 36px; background: var(--cream); }
+  #status .icons { display: flex; gap: 16px; align-items: center; font-size: 18px; color: #999; }
+  #status .bat { min-width: 66px; height: 34px; border-radius: 10px; background: #141414; color: #fff; font-size: 24px; font-weight: 800;
+                 display: grid; place-items: center; }
+  #safari { position: absolute; left: 86px; right: 86px; bottom: 34px; height: 116px; z-index: 16; display: flex; gap: 22px; align-items: center; }
+  #safari .round { width: 116px; height: 116px; border-radius: 58px; background: rgba(255,255,255,.94); box-shadow: 0 8px 30px rgba(0,0,0,.18);
+                   display: grid; place-items: center; font-size: 44px; color: #222; flex: none; }
+  #safari .pill { flex: 1; height: 116px; border-radius: 58px; background: rgba(255,255,255,.94); box-shadow: 0 8px 30px rgba(0,0,0,.18);
+                  display: flex; align-items: center; justify-content: center; font-size: 38px; font-weight: 500; color: #111; gap: 18px; }
 
-  #viewport { position: absolute; top: 174px; left: 0; width: 1080px; height: 1746px; overflow: hidden; background: #fff; }
-  .screen { position: absolute; inset: 0; background: #fff; will-change: transform; }
+  #viewport { position: absolute; top: 64px; left: 0; width: 1080px; height: 1856px; overflow: hidden; }
+  .screen { position: absolute; inset: 0; background: var(--cream); will-change: transform; }
 
-  /* site header */
-  .nav { height: 120px; display: flex; align-items: center; justify-content: space-between; padding: 0 44px;
-         border-bottom: 2px solid var(--line); background: #fff; }
-  .brand { font-weight: 900; font-size: 44px; letter-spacing: -1px; display: flex; align-items: center; gap: 14px; }
-  .brand .mark { width: 54px; height: 54px; border-radius: 14px; background: var(--brand); color: #fff;
-                 display: grid; place-items: center; font-size: 30px; font-weight: 900; }
-  .burger { width: 48px; height: 34px; display: flex; flex-direction: column; justify-content: space-between; }
-  .burger i { height: 5px; background: #111; border-radius: 3px; }
-  .back { font-size: 34px; font-weight: 600; display: flex; align-items: center; gap: 14px; }
-  .back::before { content: ""; width: 20px; height: 20px; border-left: 5px solid #111; border-bottom: 5px solid #111; transform: rotate(45deg); }
+  .announce { height: 110px; background: #111; color: #fff; display: flex; align-items: center; justify-content: space-between;
+              padding: 0 44px; font-size: 30px; font-weight: 500; letter-spacing: .02em; }
+  .announce .chev { font-size: 40px; color: #ccc; }
+  .header { height: 150px; background: var(--cream); display: flex; align-items: center; padding: 0 40px; gap: 46px; }
+  .header .wordmark { flex: 1; display: flex; align-items: center; justify-content: center; gap: 34px; font-size: 34px; font-weight: 500; letter-spacing: .3em; padding-left: 40px; }
+  .ico { width: 54px; height: 54px; flex: none; }
+  .ico svg { width: 100%; height: 100%; fill: none; stroke: #141414; stroke-width: 3.5; stroke-linecap: round; }
+  #stickyHeader { position: absolute; left: 0; right: 0; top: 0; z-index: 8; }
 
   /* home */
-  .hero { margin: 36px 36px 0; border-radius: 40px; background: var(--soft); padding: 64px 56px 72px; position: relative; overflow: hidden; }
-  .hero h1 { font-size: 104px; line-height: .98; letter-spacing: -4px; font-weight: 900; }
-  .hero h1 em { font-style: normal; color: var(--brand); }
-  .hero p { margin-top: 28px; font-size: 38px; line-height: 1.35; color: #444; max-width: 820px; }
-  .hero .tees { height: 520px; position: relative; margin-top: 30px; }
-  .hero .tees svg { position: absolute; width: 400px; height: 427px; }
-  .btn { display: inline-flex; align-items: center; justify-content: center; height: 128px; padding: 0 64px; border-radius: 64px;
-         background: var(--brand); color: #fff; font-size: 44px; font-weight: 800; box-shadow: 0 14px 30px rgba(255,90,54,.35); }
-  .btn.dark { background: #141414; box-shadow: 0 14px 30px rgba(0,0,0,.25); }
-  .btn.block { display: flex; width: 100%; }
-  .how { padding: 70px 44px; }
-  .how h2 { font-size: 56px; font-weight: 900; letter-spacing: -1.5px; margin-bottom: 30px; }
-  .step { display: flex; gap: 30px; align-items: center; padding: 30px 0; border-bottom: 2px solid var(--line); font-size: 38px; font-weight: 600; }
-  .step span { width: 76px; height: 76px; border-radius: 38px; background: #141414; color: #fff; display: grid; place-items: center; font-weight: 800; flex: none; }
+  .heroDark { position: absolute; top: 260px; left: 0; right: 0; bottom: 0; overflow: hidden;
+              background: radial-gradient(900px 700px at 50% 45%, #3a3226 0%, #1b1813 55%, #121110 100%); }
+  .heroDark::before { content: ""; position: absolute; inset: 0; opacity: .25;
+                      background: repeating-linear-gradient(135deg, rgba(255,255,255,.05) 0 2px, transparent 2px 18px); }
+  .frame { position: absolute; top: 30px; left: 30px; right: 30px; height: 1400px; border: 2px solid rgba(184,150,62,.55); }
+  .madeby { position: absolute; top: 60px; right: 60px; height: 84px; padding: 0 44px; border: 3px solid var(--gold); border-radius: 42px; color: var(--gold-soft);
+            display: grid; place-items: center; font-size: 28px; font-weight: 500; letter-spacing: .3em; }
+  .band { position: absolute; top: 290px; left: 0; right: 0; height: 500px; background: #fff; }
+  #carousel { position: absolute; top: 170px; left: 0; height: 680px; width: 100%; }
+  .ccard { position: absolute; top: 0; width: 680px; height: 680px; background: #fff; border: 3px solid var(--gold-soft); border-radius: 6px;
+           display: grid; place-items: center; box-shadow: 0 30px 60px rgba(0,0,0,.35); }
+  .ccard svg { width: 520px; height: 555px; }
+  #cName { position: absolute; top: 900px; left: 0; right: 0; text-align: center; color: #fff; font-size: 58px; font-weight: 500; }
+  #cPrice { position: absolute; top: 990px; left: 0; right: 0; text-align: center; color: var(--gold-soft); font-size: 30px; font-weight: 500; letter-spacing: .25em; }
+  .pager { position: absolute; top: 1140px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 70px; color: #fff; font-size: 30px; }
+  .pager .arrow { width: 92px; height: 92px; border-radius: 46px; border: 3px solid var(--gold); display: grid; place-items: center; color: #fff; font-size: 40px; }
+  .pager b { font-weight: 700; }
+  .heroCopy { position: absolute; top: 1460px; left: 50px; right: 50px; color: #fff; }
+  .heroCopy .kicker { display: flex; gap: 36px; align-items: flex-start; color: var(--gold-soft); font-size: 30px; letter-spacing: .3em; line-height: 1.5; }
+  .heroCopy .kicker::before { content: ""; width: 80px; border-top: 3px solid var(--gold); margin-top: 22px; flex: none; }
+  .heroCopy h1 { margin-top: 30px; font-family: Cormorant, serif; font-weight: 500; font-size: 140px; line-height: 1; }
+  .heroCopy h1 em { color: var(--gold-soft); }
 
-  /* shop */
-  .page-title { padding: 44px 44px 10px; font-size: 68px; font-weight: 900; letter-spacing: -2px; }
-  .chips { display: flex; gap: 18px; padding: 20px 44px 30px; }
-  .chip { height: 72px; padding: 0 34px; border-radius: 36px; border: 2px solid var(--line); display: grid; place-items: center; font-size: 30px; font-weight: 600; }
-  .chip.on { background: #141414; color: #fff; border-color: #141414; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; padding: 0 44px; }
-  .card { border-radius: 32px; overflow: hidden; border: 2px solid var(--line); }
-  .card .img { height: 440px; background: var(--soft); display: grid; place-items: center; }
-  .card .img svg { width: 340px; height: 363px; }
-  .card .meta { padding: 24px 26px 30px; }
-  .card .name { font-size: 34px; font-weight: 800; }
-  .card .sub { font-size: 27px; color: var(--muted); margin-top: 8px; }
-  .card .tag { display: inline-block; margin-top: 14px; font-size: 24px; font-weight: 800; color: var(--brand); text-transform: uppercase; letter-spacing: 1px; }
+  /* product page */
+  #page { position: absolute; top: 0; left: 0; width: 1080px; will-change: transform; }
+  .sample { margin: 46px 50px 0; background: #111; color: #fff; padding: 36px 36px 30px; border-left: 8px solid var(--gold); font-size: 31px; line-height: 1.45; }
+  .sample b { color: var(--gold-soft); }
+  .sample .blank { text-align: right; margin-top: 14px; color: var(--gold-soft); text-decoration: underline; }
+  #canvas { margin: 26px 50px 0; height: 980px; position: relative; overflow: hidden; background: linear-gradient(180deg, #ece5d8, #ddd2bf); }
+  #canvas .zoom { position: absolute; top: 34px; left: 34px; width: 96px; height: 96px; border-radius: 48px; background: #fff; display: grid; place-items: center; z-index: 2; }
+  #canvas .s3d { position: absolute; top: 32px; right: 30px; height: 96px; padding: 0 40px; background: #111; color: #fff; border: 3px solid var(--gold);
+                 display: flex; align-items: center; gap: 22px; font-size: 30px; font-weight: 700; letter-spacing: .2em; z-index: 2; }
+  #bigTee { position: absolute; left: 50%; top: 120px; width: 860px; height: 917px; margin-left: -430px; }
+  .views { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin: 30px 50px 0; }
+  .view { text-align: center; font-size: 27px; font-weight: 700; letter-spacing: .2em; }
+  .view .box { height: 210px; background: #e7dfd0; display: grid; place-items: center; margin-bottom: 18px; position: relative; }
+  .view .box.dark { background: #111; }
+  .view .box.sel { outline: 4px solid var(--gold); }
+  .view .box.sel::after { content: ""; position: absolute; top: 14px; right: 14px; width: 20px; height: 20px; border-radius: 10px; background: var(--gold); }
+  .view svg.mini { width: 170px; height: 181px; }
+  .actions { display: flex; gap: 22px; margin: 32px 50px 0; }
+  .actions div { height: 100px; border: 2px solid var(--line); display: grid; place-items: center; font-size: 28px; letter-spacing: .25em; padding: 0 30px; background: var(--cream); }
+  .actions div:nth-child(2) { flex: 1; }
+  .tip { margin: 30px 50px 0; color: var(--muted); font-size: 29px; line-height: 1.45; }
+  .crumb { margin: 50px 50px 0; color: #b5aea3; font-size: 26px; letter-spacing: .25em; }
+  .ptitle { margin: 30px 50px 0; font-family: Cormorant, serif; font-weight: 500; font-size: 84px; line-height: 1; }
+  .price { margin: 34px 50px 0; font-size: 46px; font-weight: 800; }
+  .made { margin: 26px 50px 0; color: var(--gold); font-size: 29px; font-weight: 500; letter-spacing: .14em; display: flex; align-items: center; gap: 18px; }
+  .made::before { content: ""; width: 14px; height: 14px; border-radius: 7px; background: var(--gold); }
+  .tax { margin: 26px 50px 0; font-size: 31px; line-height: 1.45; color: #333; }
+  .label { margin: 64px 50px 0; font-size: 29px; letter-spacing: .25em; }
+  .label span { letter-spacing: .06em; font-size: 32px; }
+  .label u { margin-left: 40px; text-underline-offset: 8px; text-decoration-color: var(--gold); text-decoration-thickness: 3px; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 24px 22px; margin: 30px 44px 0; }
+  .sw { width: 92px; height: 92px; border-radius: 46px; border: 4px solid var(--cream); box-shadow: 0 0 0 2px #bbb; position: relative; }
+  .sw.sel { box-shadow: 0 0 0 4px #141414; }
+  .sizes { display: flex; flex-wrap: wrap; gap: 22px 20px; margin: 30px 50px 0; }
+  .sz { width: 130px; height: 108px; border: 2px solid var(--line); background: #fff; display: grid; place-items: center; font-size: 31px; }
+  .sz.sel { background: #111; color: #fff; border-color: #111; }
+  .sz.out { background: transparent; color: #aaa; text-decoration: line-through; }
+  #btnATC { margin: 40px 50px 0; height: 128px; background: #111; color: #fff; display: grid; place-items: center; font-size: 33px; font-weight: 700; letter-spacing: .25em; }
+  #tabs { margin: 50px 50px 0; border: 2px solid var(--line); background: #fff; }
+  .tabrow { display: grid; grid-template-columns: 1fr 1fr 1fr; border-bottom: 2px solid var(--line); }
+  .tab { height: 170px; display: grid; place-items: center; text-align: center; font-size: 28px; letter-spacing: .25em; line-height: 1.6; position: relative; }
+  .tab.on::after { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 6px; background: var(--gold); }
+  .panel { padding: 50px 50px 60px; min-height: 620px; position: relative; }
+  .panel p { font-size: 31px; line-height: 1.45; color: #333; }
+  .tpls { display: flex; gap: 24px; margin-top: 40px; }
+  .tpl { width: 240px; border: 3px solid var(--line); background: var(--cream); padding: 14px 14px 26px; text-align: center; font-size: 29px; letter-spacing: .05em; }
+  .tpl.sel { border-color: var(--gold); }
+  .tpl .art { height: 200px; background: #fff; margin-bottom: 26px; display: grid; place-items: center; }
+  .dz { margin-top: 40px; border: 3px dashed var(--gold-soft); padding: 50px 30px; text-align: center; background: var(--cream); }
+  .dz .big { font-family: Cormorant, serif; font-size: 52px; font-weight: 500; }
+  .dz .small { font-size: 26px; color: var(--muted); margin-top: 10px; }
+  #chooseFile { display: inline-block; margin-top: 34px; height: 100px; line-height: 100px; padding: 0 60px; background: #111; color: #fff; font-size: 28px; font-weight: 700; letter-spacing: .25em; }
+  .uploaded { margin-top: 40px; display: flex; align-items: center; gap: 30px; padding: 26px; border: 2px solid var(--line); background: var(--cream); }
+  .uploaded .th { width: 140px; height: 140px; background: #fff; display: grid; place-items: center; }
+  .uploaded b { font-size: 31px; }
+  .uploaded .ok { color: #2e7d4f; font-weight: 700; font-size: 27px; margin-top: 10px; }
 
-  /* designer */
-  .stagebox { margin: 26px 36px 0; height: 900px; border-radius: 40px; background: var(--soft); position: relative; overflow: hidden; }
-  .stagebox .face { position: absolute; top: 26px; left: 50%; transform: translateX(-50%); display: flex; background: #fff;
-                    border-radius: 34px; padding: 6px; font-size: 28px; font-weight: 700; z-index: 2; }
-  .stagebox .face div { padding: 14px 34px; border-radius: 28px; }
-  .stagebox .face .on { background: #141414; color: #fff; }
-  #bigTee { position: absolute; left: 50%; top: 110px; width: 760px; height: 811px; margin-left: -380px; transform-origin: 50% 40%; }
-  .label { padding: 34px 44px 14px; font-size: 30px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; }
-  .label b { color: var(--ink); text-transform: none; letter-spacing: 0; }
-  .swatches { display: flex; gap: 26px; padding: 0 44px; }
-  .sw { width: 92px; height: 92px; border-radius: 46px; border: 3px solid rgba(0,0,0,.12); position: relative; }
-  .sw.sel::after { content: ""; position: absolute; inset: -12px; border-radius: 60px; border: 5px solid var(--brand); }
-  .tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; padding: 34px 44px 0; }
-  .tool { height: 150px; border-radius: 28px; border: 2px solid var(--line); display: flex; flex-direction: column; align-items: center;
-          justify-content: center; gap: 10px; font-size: 29px; font-weight: 700; }
-  .tool .ic { font-size: 46px; line-height: 1; }
-  .tool.hot { border-color: var(--brand); background: #fff3ef; color: var(--brand-dark); }
-  .bottombar { position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 44px 44px; background: #fff; border-top: 2px solid var(--line); }
+  #live { position: absolute; top: 236px; right: 30px; width: 310px; z-index: 7; border: 3px solid var(--gold-soft); border-radius: 18px; overflow: hidden;
+          background: linear-gradient(180deg, #ece5d8, #ddd2bf); box-shadow: 0 20px 50px rgba(0,0,0,.25); opacity: 0; }
+  #live svg { display: block; width: 260px; height: 230px; margin: 14px auto 0; }
+  #live .bar { background: #111; color: #fff; height: 52px; display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 22px; font-weight: 800; letter-spacing: .2em; }
+  #live .bar::before { content: ""; width: 14px; height: 14px; border-radius: 7px; background: var(--gold-soft); }
 
-  /* sheets */
-  .scrim { position: absolute; inset: 0; background: rgba(0,0,0,.45); opacity: 0; }
-  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: #fff; border-radius: 48px 48px 0 0; padding: 26px 44px 54px;
-           transform: translateY(110%); box-shadow: 0 -20px 60px rgba(0,0,0,.2); }
-  .sheet .grab { width: 120px; height: 10px; border-radius: 5px; background: #ddd; margin: 0 auto 30px; }
-  .sheet h3 { font-size: 52px; font-weight: 900; letter-spacing: -1px; }
-  .sheet .hint { font-size: 30px; color: var(--muted); margin-top: 10px; }
-  .drop { margin-top: 30px; border: 4px dashed #d6d0c6; border-radius: 30px; padding: 26px; }
-  .thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .thumb { height: 270px; border-radius: 22px; overflow: hidden; position: relative; }
-  .thumb .fn { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 14px; font-size: 22px; font-weight: 700; color: #fff;
-               background: linear-gradient(transparent, rgba(0,0,0,.6)); }
-  #thumbLogo { background: #fff; border: 3px solid var(--line); display: grid; place-items: center; }
-  #thumbLogo svg { width: 190px; height: 190px; }
-  #thumbLogo .fn { color: #333; background: none; }
-  #thumbLogo .ring { position: absolute; inset: 0; border: 7px solid var(--brand); border-radius: 22px; opacity: 0; }
-  .progress { margin-top: 28px; height: 18px; border-radius: 9px; background: #eee; overflow: hidden; opacity: 0; }
-  .progress i { display: block; height: 100%; width: 0; background: var(--brand); border-radius: 9px; }
-  .ptext { font-size: 28px; font-weight: 700; margin-top: 14px; color: var(--muted); opacity: 0; }
-
-  .sizes { margin-top: 24px; }
-  .srow { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; border-bottom: 2px solid var(--line); }
-  .srow .sz { font-size: 40px; font-weight: 800; width: 140px; }
-  .stepper { display: flex; align-items: center; gap: 30px; }
-  .stepper .b { width: 88px; height: 88px; border-radius: 44px; border: 3px solid var(--line); display: grid; place-items: center; font-size: 50px; font-weight: 600; line-height: 1; }
-  .stepper .b.plus { background: #141414; color: #fff; border-color: #141414; }
-  .stepper .n { font-size: 44px; font-weight: 800; width: 60px; text-align: center; }
-  .totalrow { display: flex; justify-content: space-between; align-items: center; padding: 30px 0; font-size: 36px; font-weight: 700; }
-  .totalrow b { font-size: 46px; }
-
-  /* cart */
-  .added { margin: 40px 44px 0; padding: 30px; border-radius: 30px; background: #eaf7ee; color: #156a35; font-size: 38px; font-weight: 800;
-           display: flex; align-items: center; gap: 22px; }
-  .added .tick { width: 64px; height: 64px; border-radius: 32px; background: #1f9d55; display: grid; place-items: center; }
-  .added .tick::after { content: ""; width: 14px; height: 28px; border: solid #fff; border-width: 0 7px 7px 0; transform: rotate(45deg) translate(-2px,-3px); }
-  .line-item { margin: 34px 44px 0; display: flex; gap: 34px; align-items: center; padding-bottom: 34px; border-bottom: 2px solid var(--line); }
-  .line-item .img { width: 300px; height: 300px; border-radius: 28px; background: var(--soft); display: grid; place-items: center; flex: none; }
-  .line-item .img svg { width: 260px; height: 277px; }
-  .line-item h4 { font-size: 40px; font-weight: 800; }
-  .line-item p { font-size: 30px; color: var(--muted); margin-top: 10px; line-height: 1.4; }
+  /* sheets / drawers */
+  .scrim { position: absolute; inset: 0; background: rgba(0,0,0,.45); opacity: 0; z-index: 9; }
+  #photos { position: absolute; left: 0; right: 0; bottom: 0; height: 1240px; z-index: 10; background: #f2f2f7; border-radius: 40px 40px 0 0; padding: 26px 0 0;
+            transform: translateY(105%); box-shadow: 0 -20px 60px rgba(0,0,0,.25); }
+  #photos .top { display: flex; justify-content: space-between; align-items: center; padding: 10px 44px 26px; font-size: 36px; }
+  #photos .top b { font-size: 38px; }
+  #photos .top span { color: #0a7aff; }
+  .pgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 0 6px; }
+  .ph { height: 262px; position: relative; overflow: hidden; }
+  #photoLogo { background: #fff; display: grid; place-items: center; }
+  #photoLogo svg { width: 200px; height: 200px; }
+  #photoRing { position: absolute; inset: 0; border: 8px solid #0a7aff; opacity: 0; }
+  #photoCheck { position: absolute; right: 12px; bottom: 12px; width: 46px; height: 46px; border-radius: 23px; background: #0a7aff; border: 4px solid #fff; opacity: 0; }
+  .prog { margin: 30px 44px 0; height: 14px; border-radius: 7px; background: #ddd; overflow: hidden; opacity: 0; }
+  .prog i { display: block; height: 100%; width: 0; background: #0a7aff; }
+  #cartDrawer { position: absolute; top: 0; right: 0; bottom: 0; width: 960px; z-index: 10; background: var(--cream); transform: translateX(105%);
+                box-shadow: -20px 0 60px rgba(0,0,0,.3); padding: 120px 56px 0; }
+  #cartDrawer h3 { font-size: 34px; letter-spacing: .3em; font-weight: 600; display: flex; justify-content: space-between; }
+  .added { margin-top: 50px; padding: 28px 30px; background: #111; color: #fff; font-size: 30px; display: flex; gap: 20px; align-items: center; border-left: 8px solid var(--gold); }
+  .added .tick { width: 50px; height: 50px; border-radius: 25px; background: var(--gold); display: grid; place-items: center; flex: none; }
+  .added .tick::after { content: ""; width: 11px; height: 22px; border: solid #111; border-width: 0 6px 6px 0; transform: rotate(45deg) translate(-2px,-2px); }
+  .item { display: flex; gap: 36px; margin-top: 50px; padding-bottom: 50px; border-bottom: 2px solid var(--line); }
+  .item .th { width: 280px; height: 300px; background: linear-gradient(180deg, #ece5d8, #ddd2bf); display: grid; place-items: center; flex: none; }
+  .item .th svg { width: 250px; height: 267px; }
+  .item h4 { font-family: Cormorant, serif; font-weight: 500; font-size: 60px; line-height: 1; }
+  .item p { margin-top: 18px; font-size: 29px; color: var(--muted); line-height: 1.5; }
+  .item .pr { margin-top: 20px; font-size: 38px; font-weight: 800; }
+  .ship { margin-top: 40px; color: var(--gold); font-size: 26px; font-weight: 600; letter-spacing: .14em; text-align: center; }
+  #btnCheckout { margin-top: 36px; height: 128px; background: #111; color: #fff; display: grid; place-items: center; font-size: 33px; font-weight: 700; letter-spacing: .3em; }
 
   /* captions */
-  #cap { position: absolute; left: 60px; right: 60px; top: 240px; display: flex; justify-content: center; z-index: 20; pointer-events: none; }
-  #cap .t { background: #fff; color: #111; font-weight: 900; font-size: 62px; line-height: 1.12; letter-spacing: -1px; text-align: center;
-            padding: 22px 38px 26px; border-radius: 26px; box-shadow: 0 12px 40px rgba(0,0,0,.28); max-width: 960px; }
-  #cap .t em { font-style: normal; color: var(--brand); }
+  #cap { position: absolute; left: 50px; right: 50px; bottom: 190px; display: flex; justify-content: center; z-index: 20; pointer-events: none; }
+  #cap .t { background: #fff; color: #111; font-weight: 800; font-size: 56px; line-height: 1.15; letter-spacing: -1px; text-align: center;
+            padding: 22px 38px 26px; border-radius: 24px; box-shadow: 0 12px 40px rgba(0,0,0,.3); max-width: 980px; transform-origin: 50% 100%; }
+  #cap .t em { font-style: normal; color: var(--gold); }
 
-  #hook { position: absolute; inset: 0; z-index: 18; background: rgba(10,10,10,.62); display: flex; align-items: center; justify-content: center; padding: 70px; }
-  #hook .t { color: #fff; font-weight: 900; font-size: 92px; line-height: 1.08; letter-spacing: -3px; text-align: center; }
-  #hook .t em { font-style: normal; color: #ffd23f; }
-  #hook .pov { display: inline-block; background: var(--brand); color: #fff; font-size: 52px; letter-spacing: 0; padding: 12px 28px; border-radius: 18px; margin-bottom: 34px; }
+  #hook { position: absolute; inset: 0; z-index: 18; background: rgba(10,9,7,.66); display: flex; align-items: center; justify-content: center; padding: 70px; }
+  #hook .t { color: #fff; font-weight: 800; font-size: 90px; line-height: 1.1; letter-spacing: -3px; text-align: center; }
+  #hook .t em { font-style: normal; color: var(--gold-soft); }
+  #hook .pov { display: inline-block; background: var(--gold); color: #111; font-size: 50px; letter-spacing: 0; padding: 12px 30px; border-radius: 18px; margin-bottom: 36px; }
 
   /* finger */
   #finger { position: absolute; left: 0; top: 0; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 48px; z-index: 30;
             background: rgba(255,255,255,.55); border: 4px solid rgba(20,20,20,.55); box-shadow: 0 6px 24px rgba(0,0,0,.25); opacity: 0; }
   .ripple { position: absolute; left: 0; top: 0; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 48px; z-index: 29;
-            border: 6px solid var(--brand); opacity: 0; }
+            border: 6px solid var(--gold); opacity: 0; }
 
   /* end card */
   #end { position: absolute; inset: 0; z-index: 40; opacity: 0; color: #fff; overflow: hidden;
-         background: radial-gradient(900px 900px at 50% 52%, #6b2a17 0%, #2a120b 45%, #111 75%); }
-  #end .top { position: absolute; top: 170px; left: 0; right: 0; text-align: center; }
-  #end h2 { font-size: 132px; line-height: .95; font-weight: 900; letter-spacing: -5px; }
-  #end h2 em { font-style: normal; color: var(--brand); }
-  #endTee { position: absolute; left: 50%; top: 520px; width: 820px; height: 875px; margin-left: -410px;
-           filter: drop-shadow(0 0 50px rgba(255,120,80,.45)) drop-shadow(0 30px 40px rgba(0,0,0,.6)); }
-  #end .cta { position: absolute; left: 0; right: 0; bottom: 170px; text-align: center; }
-  #end .url { font-size: 68px; font-weight: 900; letter-spacing: -1px; }
-  #end .btn { margin-top: 34px; height: 140px; font-size: 50px; padding: 0 80px; }
+         background: radial-gradient(900px 900px at 50% 52%, #4a3e2a 0%, #1b1813 55%, #100f0d 100%); }
+  #end::before { content: ""; position: absolute; inset: 40px; border: 2px solid rgba(184,150,62,.55); }
+  #end .top { position: absolute; top: 180px; left: 0; right: 0; text-align: center; }
+  #end h2 { font-family: Cormorant, serif; font-weight: 500; font-size: 150px; line-height: .95; }
+  #end h2 em { color: var(--gold-soft); }
+  #endTee { position: absolute; left: 50%; top: 560px; width: 760px; height: 811px; margin-left: -380px;
+            filter: drop-shadow(0 0 50px rgba(216,189,120,.35)) drop-shadow(0 30px 40px rgba(0,0,0,.6)); }
+  #end .cta { position: absolute; left: 0; right: 0; bottom: 190px; text-align: center; }
+  #end .url { font-size: 62px; font-weight: 600; letter-spacing: .04em; }
+  #end .sub { margin-top: 22px; color: var(--gold-soft); font-size: 27px; font-weight: 500; letter-spacing: .2em; }
+  #end .btn { display: inline-block; margin-top: 44px; height: 128px; line-height: 122px; padding: 0 70px; border: 3px solid var(--gold); color: #fff;
+              font-size: 32px; font-weight: 700; letter-spacing: .3em; background: rgba(184,150,62,.15); }
 </style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute">
   <defs>
     <linearGradient id="shade" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#000" stop-opacity=".22"/>
+      <stop offset="0" stop-color="#000" stop-opacity=".18"/>
       <stop offset=".18" stop-color="#000" stop-opacity="0"/>
-      <stop offset=".5" stop-color="#fff" stop-opacity=".10"/>
+      <stop offset=".5" stop-color="#fff" stop-opacity=".08"/>
       <stop offset=".82" stop-color="#000" stop-opacity="0"/>
-      <stop offset="1" stop-color="#000" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#000" stop-opacity=".18"/>
     </linearGradient>
+    <filter id="heather" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="3" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .5  0 0 0 .12 0" result="g"/>
+      <feComposite in="g" in2="SourceAlpha" operator="in" result="gm"/>
+      <feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="gm"/></feMerge>
+    </filter>
     <!-- t-shirt silhouette; fill is inherited from the <use> element -->
     <symbol id="tee" viewBox="0 0 600 640">
       <path d="M205 42 C238 82 362 82 395 42 L535 98 Q560 108 572 132 L600 222 Q604 238 588 245 L506 278 Q492 284 486 270 L478 246 L478 606 Q478 622 462 622 L138 622 Q122 622 122 606 L122 246 L114 270 Q108 284 94 278 L12 245 Q-4 238 0 222 L28 132 Q40 108 65 98 Z"/>
       <path d="M205 42 C238 82 362 82 395 42 L535 98 Q560 108 572 132 L600 222 Q604 238 588 245 L506 278 Q492 284 486 270 L478 246 L478 606 Q478 622 462 622 L138 622 Q122 622 122 606 L122 246 L114 270 Q108 284 94 278 L12 245 Q-4 238 0 222 L28 132 Q40 108 65 98 Z" fill="url(#shade)"/>
-      <path d="M205 42 C238 82 362 82 395 42 C372 96 228 96 205 42 Z" fill="#000" fill-opacity=".18"/>
-      <path d="M122 246 L122 236 M478 246 L478 236" stroke="#000" stroke-opacity=".15" stroke-width="4"/>
+      <path d="M205 42 C238 82 362 82 395 42 C372 96 228 96 205 42 Z" fill="#000" fill-opacity=".14"/>
+    </symbol>
+    <symbol id="hoodie" viewBox="0 0 600 640">
+      <path d="M215 60 Q300 0 385 60 L470 100 Q520 120 538 180 L590 560 Q594 590 566 594 L520 600 Q496 602 492 578 L470 330 L470 600 Q470 620 450 620 L150 620 Q130 620 130 600 L130 330 L108 578 Q104 602 80 600 L34 594 Q6 590 10 560 L62 180 Q80 120 130 100 Z"/>
+      <path d="M215 60 Q300 0 385 60 Q400 150 300 190 Q200 150 215 60 Z" fill="#000" fill-opacity=".25"/>
+      <path d="M200 440 L400 440 L420 560 L180 560 Z" fill="#000" fill-opacity=".18"/>
+      <path d="M285 180 L282 260 M315 180 L318 260" stroke="#ddd" stroke-width="5" stroke-linecap="round"/>
     </symbol>
     <!-- sample company logo (fictional brand) -->
     <symbol id="logo" viewBox="-110 -110 220 220">
@@ -197,143 +247,177 @@
       <circle r="84" fill="none" stroke="#f2c14e" stroke-width="3"/>
       <path d="M0 -50 C34 -26 34 14 0 36 C-34 14 -34 -26 0 -50 Z" fill="#f2c14e"/>
       <path d="M0 -40 L0 34 M0 -14 L-14 -26 M0 4 L16 -10 M0 20 L-15 8" stroke="#1f5f4f" stroke-width="4" stroke-linecap="round" fill="none"/>
-      <text y="-58" text-anchor="middle" font-family="Inter" font-weight="800" font-size="15" letter-spacing="3" fill="#f2c14e">EST. 2026</text>
-      <text y="64" text-anchor="middle" font-family="Inter" font-weight="900" font-size="25" letter-spacing="2" fill="#fff">BLUEGUM</text>
-      <text y="84" text-anchor="middle" font-family="Inter" font-weight="800" font-size="13" letter-spacing="4" fill="#f2c14e">COFFEE CO.</text>
+      <text y="-58" text-anchor="middle" font-family="Montserrat" font-weight="800" font-size="15" letter-spacing="3" fill="#f2c14e">EST. 2026</text>
+      <text y="64" text-anchor="middle" font-family="Montserrat" font-weight="800" font-size="25" letter-spacing="2" fill="#fff">BLUEGUM</text>
+      <text y="84" text-anchor="middle" font-family="Montserrat" font-weight="800" font-size="13" letter-spacing="4" fill="#f2c14e">COFFEE CO.</text>
     </symbol>
+    <!-- the site's sample "Name & year" template -->
+    <path id="arc" d="M196 300 Q300 214 404 300"/>
+    <symbol id="sampleArt" viewBox="0 0 600 640">
+      <text font-family="Montserrat" font-weight="800" font-size="50" fill="#b8963e" letter-spacing="2" text-anchor="middle">
+        <textPath href="#arc" startOffset="50%">SHARMA</textPath></text>
+      <text x="300" y="360" text-anchor="middle" font-family="Montserrat" font-weight="500" font-size="15" letter-spacing="7" fill="#b8963e">EST. 2026</text>
+    </symbol>
+    <symbol id="clmark" viewBox="0 0 60 60">
+      <path d="M40 8 A24 24 0 1 0 40 52" fill="none" stroke="#b8963e" stroke-width="3.2"/>
+      <path d="M30 16 L30 52 L52 52" fill="none" stroke="#b8963e" stroke-width="3.2"/>
+    </symbol>
+    <symbol id="i-burger" viewBox="0 0 48 48"><path d="M6 15 H42 M6 33 H42"/></symbol>
+    <symbol id="i-search" viewBox="0 0 48 48"><circle cx="21" cy="21" r="13"/><path d="M31 31 L42 42"/></symbol>
+    <symbol id="i-user" viewBox="0 0 48 48"><circle cx="24" cy="16" r="9"/><path d="M8 43 Q8 28 24 28 Q40 28 40 43 Z"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 48 48"><rect x="7" y="14" width="34" height="28" rx="6"/><path d="M16 18 V12 Q16 5 24 5 Q32 5 32 12 V18"/></symbol>
   </defs>
 </svg>
 
 <div id="stage">
-  <div id="status"><span>9:41</span><span class="icons"><span>●●●●</span><span class="bat"></span></span></div>
-  <div id="urlbar"><div class="pill"><span class="lock"></span><span id="url"><b>customiselab.com.au</b></span></div></div>
+  <div id="status"><span>4:41</span><span class="icons"><span>●●●●</span><span style="font-size:34px;color:#111">ᯤ</span><span class="bat">48</span></span></div>
 
   <div id="viewport">
     <!-- HOME -->
     <div class="screen" id="home">
-      <div id="homeScroll">
-        <div class="nav"><div class="brand"><div class="mark">C</div>Customise Lab</div><div class="burger"><i></i><i></i><i></i></div></div>
-        <div class="hero">
-          <h1>Your design.<br><em>Your tee.</em></h1>
-          <p>Upload your logo, pick a colour and order tees for the whole crew.</p>
-          <div class="tees">
-            <svg viewBox="0 0 600 640" style="left:-30px;top:60px;transform:rotate(-10deg)"><use href="#tee" fill="#1d2a44"/></svg>
-            <svg viewBox="0 0 600 640" style="left:500px;top:60px;transform:rotate(10deg)"><use href="#tee" fill="#e9e4da"/></svg>
-            <svg viewBox="0 0 600 640" style="left:240px;top:10px;width:460px;height:491px"><use href="#tee" fill="#ff5a36"/>
-              <use href="#logo" x="230" y="160" width="140" height="140"/></svg>
-          </div>
-          <div class="btn" id="cta">Start designing →</div>
+      <div class="announce"><span class="chev">‹</span>SIGN UP &amp; GET 10% OFF YOUR FIRST ORDER<span class="chev">›</span></div>
+      <div class="header">
+        <div class="ico"><svg><use href="#i-burger"/></svg></div><div class="ico"><svg><use href="#i-search"/></svg></div>
+        <div class="wordmark"><svg width="64" height="64"><use href="#clmark"/></svg>CUSTOMISE LAB</div>
+        <div class="ico"><svg><use href="#i-user"/></svg></div><div class="ico"><svg><use href="#i-bag"/></svg></div>
+      </div>
+      <div class="heroDark">
+        <div class="frame"></div>
+        <div class="madeby">MADE BY YOU</div>
+        <div class="band"></div>
+        <div id="carousel">
+          <div class="ccard" id="cc0"><svg viewBox="0 0 600 640"><use href="#tee" fill="#f7f7f5"/>
+            <text x="300" y="230" text-anchor="middle" font-family="Cormorant" font-style="italic" font-size="56" fill="#7a4a3a">But first</text>
+            <text x="300" y="295" text-anchor="middle" font-family="Montserrat" font-weight="800" font-size="64" fill="#b8963e">COFFEE</text></svg></div>
+          <div class="ccard" id="cc1"><svg viewBox="0 0 600 640"><use href="#hoodie" fill="#151515"/>
+            <circle cx="300" cy="250" r="16" fill="#d8bd78"/><circle cx="270" cy="225" r="9" fill="#d8bd78"/><circle cx="290" cy="212" r="9" fill="#d8bd78"/><circle cx="310" cy="212" r="9" fill="#d8bd78"/><circle cx="330" cy="225" r="9" fill="#d8bd78"/>
+            <text x="300" y="320" text-anchor="middle" font-family="Montserrat" font-weight="800" font-size="50" fill="#fff">DOG DAD</text>
+            <text x="300" y="356" text-anchor="middle" font-family="Cormorant" font-style="italic" font-weight="600" font-size="30" fill="#d8bd78">Bella &amp; Max</text></svg></div>
+          <div class="ccard" id="cc2"><svg viewBox="0 0 600 640">
+            <rect x="110" y="140" width="330" height="380" rx="26" fill="#f4f4f2" stroke="#ddd" stroke-width="4"/>
+            <path d="M440 220 Q540 220 540 320 Q540 420 440 420" fill="none" stroke="#e8e8e6" stroke-width="40"/>
+            <text x="275" y="350" text-anchor="middle" font-family="Cormorant" font-weight="600" font-size="120" fill="#141414">MA</text>
+            <text x="275" y="410" text-anchor="middle" font-family="Cormorant" font-style="italic" font-size="40" fill="#c0394a">Ava &amp; Leo</text></svg></div>
         </div>
-        <div class="how">
-          <h2>How it works</h2>
-          <div class="step"><span>1</span>Choose your garment</div>
-          <div class="step"><span>2</span>Upload your logo or artwork</div>
-          <div class="step"><span>3</span>Pick sizes &amp; check out</div>
+        <div id="cName" class="serif">Classic Heavy Blend Hoodie</div>
+        <div id="cPrice">FROM $50.95</div>
+        <div class="pager"><div class="arrow" id="prevArrow">‹</div><span><b id="pg">2</b> <span style="color:#aaa">/ 8</span></span><div class="arrow">›</div></div>
+        <div class="heroCopy">
+          <div class="kicker">PREMIUM PERSONALISED GIFTS &amp; APPAREL</div>
+          <h1>Made for <em>you.</em></h1>
         </div>
       </div>
     </div>
 
-    <!-- SHOP -->
-    <div class="screen" id="shop">
-      <div class="nav"><div class="back">Back</div><div class="brand"><div class="mark">C</div></div><div class="burger"><i></i><i></i><i></i></div></div>
-      <div class="page-title">Custom T-Shirts</div>
-      <div class="chips"><div class="chip on">All</div><div class="chip">Men's</div><div class="chip">Women's</div><div class="chip">Kids</div></div>
-      <div class="grid">
-        <div class="card" id="cardClassic"><div class="img"><svg viewBox="0 0 600 640"><use href="#tee" fill="#ffffff"/></svg></div>
-          <div class="meta"><div class="name">Classic Cotton Tee</div><div class="sub">Unisex · 12 colours</div><div class="tag">Customise</div></div></div>
-        <div class="card"><div class="img"><svg viewBox="0 0 600 640"><use href="#tee" fill="#26324d"/></svg></div>
-          <div class="meta"><div class="name">Heavyweight Tee</div><div class="sub">Unisex · 8 colours</div><div class="tag">Customise</div></div></div>
-        <div class="card"><div class="img"><svg viewBox="0 0 600 640"><use href="#tee" fill="#c9b79c"/></svg></div>
-          <div class="meta"><div class="name">Women's Fitted Tee</div><div class="sub">Fitted · 10 colours</div><div class="tag">Customise</div></div></div>
-        <div class="card"><div class="img"><svg viewBox="0 0 600 640"><use href="#tee" fill="#3f6b4e"/></svg></div>
-          <div class="meta"><div class="name">Kids Tee</div><div class="sub">Ages 2–14</div><div class="tag">Customise</div></div></div>
-      </div>
-    </div>
-
-    <!-- DESIGNER -->
-    <div class="screen" id="designer">
-      <div class="nav"><div class="back">Classic Cotton Tee</div><div class="burger"><i></i><i></i><i></i></div></div>
-      <div class="stagebox">
-        <div class="face"><div class="on">Front</div><div>Back</div></div>
-        <svg id="bigTee" viewBox="0 0 600 640">
-          <use id="bigTeeFill" href="#tee" fill="#ffffff"/>
-          <rect x="190" y="150" width="220" height="300" fill="none" stroke="#999" stroke-dasharray="10 8" stroke-width="2" id="printArea" opacity="0"/>
-          <g id="logoG" opacity="0">
-            <use href="#logo" x="-110" y="-110" width="220" height="220" id="shirtLogo"/>
-            <g id="selBox">
-              <rect x="-118" y="-118" width="236" height="236" fill="none" stroke="#2f7bff" stroke-width="3"/>
-              <circle id="handleTL" cx="-118" cy="-118" r="11" fill="#fff" stroke="#2f7bff" stroke-width="3"/>
-              <circle cx="118" cy="-118" r="11" fill="#fff" stroke="#2f7bff" stroke-width="3"/>
-              <circle cx="-118" cy="118" r="11" fill="#fff" stroke="#2f7bff" stroke-width="3"/>
-              <circle id="handleBR" cx="118" cy="118" r="11" fill="#fff" stroke="#2f7bff" stroke-width="3"/>
+    <!-- PRODUCT -->
+    <div class="screen" id="product">
+      <div id="page">
+        <div class="announce"><span class="chev">‹</span>FREE SHIPPING ON 2+ ITEMS · AUSTRALIA-WIDE<span class="chev">›</span></div>
+        <div style="height:150px"></div>
+        <div class="sample"><b>Sample design</b> — type your own words in <i>Personalise it</i>, pick another layout, or upload a photo.<div class="blank">Start blank</div></div>
+        <div id="canvas">
+          <div class="zoom"><svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="#2f6fd6" stroke-width="4"><circle cx="21" cy="21" r="13"/><path d="M31 31 L42 42 M21 15 V27 M15 21 H27"/></svg></div>
+          <div class="s3d"><svg width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="3.5"><path d="M24 4 L42 14 V34 L24 44 L6 34 V14 Z M6 14 L24 24 L42 14 M24 24 V44"/></svg>SEE IT IN 3D</div>
+          <svg id="bigTee" viewBox="0 0 600 640">
+            <use class="m-fill" href="#tee" fill="#d6d6d3" filter="url(#heather)"/>
+            <rect x="190" y="150" width="220" height="300" fill="none" stroke="#b8963e" stroke-dasharray="9 7" stroke-width="2"/>
+            <use class="m-sample" href="#sampleArt" width="600" height="640"/>
+            <g class="m-logo" id="logoG" opacity="0">
+              <use href="#logo" x="-110" y="-110" width="220" height="220" id="shirtLogo"/>
+              <g id="selBox">
+                <rect x="-116" y="-116" width="232" height="232" fill="none" stroke="#b8963e" stroke-width="3"/>
+                <circle cx="-116" cy="-116" r="11" fill="#fff" stroke="#b8963e" stroke-width="3"/>
+                <circle cx="116" cy="-116" r="11" fill="#fff" stroke="#b8963e" stroke-width="3"/>
+                <circle cx="-116" cy="116" r="11" fill="#fff" stroke="#b8963e" stroke-width="3"/>
+                <circle id="handleBR" cx="116" cy="116" r="11" fill="#fff" stroke="#b8963e" stroke-width="3"/>
+              </g>
             </g>
-          </g>
-        </svg>
-      </div>
-      <div class="label">Colour · <b id="colourName">White</b></div>
-      <div class="swatches">
-        <div class="sw sel" id="sw-white" style="background:#ffffff"></div>
-        <div class="sw" id="sw-grey" style="background:#b9b9b9"></div>
-        <div class="sw" id="sw-navy" style="background:#1d2a44"></div>
-        <div class="sw" id="sw-black" style="background:#161616"></div>
-        <div class="sw" id="sw-red" style="background:#c8322b"></div>
-        <div class="sw" id="sw-green" style="background:#3f6b4e"></div>
-        <div class="sw" id="sw-sand" style="background:#d8c7a6"></div>
-      </div>
-      <div class="tools">
-        <div class="tool hot" id="toolUpload"><span class="ic">⬆️</span>Upload logo</div>
-        <div class="tool"><span class="ic">🔤</span>Add text</div>
-        <div class="tool"><span class="ic">✨</span>Clipart</div>
-      </div>
-      <div class="bottombar"><div class="btn dark block" id="btnSizes">Choose sizes</div></div>
-
-      <div class="scrim" id="scrimUp"></div>
-      <div class="sheet" id="sheetUp">
-        <div class="grab"></div>
-        <h3>Upload your design</h3>
-        <div class="hint">PNG, JPG, SVG or PDF · transparent backgrounds look best</div>
-        <div class="drop">
-          <div class="thumbs">
-            <div class="thumb" style="background:linear-gradient(135deg,#9ad0ec,#3d7ea6)"><div class="fn">IMG_2041.jpg</div></div>
-            <div class="thumb" style="background:linear-gradient(160deg,#f6d365,#fda085)"><div class="fn">IMG_2038.jpg</div></div>
-            <div class="thumb" id="thumbLogo"><svg viewBox="0 0 220 220"><use href="#logo" width="220" height="220"/></svg><div class="fn">bluegum-logo.png</div><div class="ring" id="thumbRing"></div></div>
-            <div class="thumb" style="background:linear-gradient(140deg,#c3e88d,#5b8c3a)"><div class="fn">IMG_2031.jpg</div></div>
-            <div class="thumb" style="background:linear-gradient(120deg,#d4c1ec,#7b5ea7)"><div class="fn">IMG_2027.jpg</div></div>
-            <div class="thumb" style="background:linear-gradient(150deg,#555,#222)"><div class="fn">Screenshot.png</div></div>
+          </svg>
+        </div>
+        <div class="views">
+          <div class="view"><div class="box sel"><svg class="mini mirror" viewBox="0 0 600 640"><use class="m-fill" href="#tee" fill="#d6d6d3"/><use class="m-sample" href="#sampleArt" width="600" height="640"/><g class="m-logo" opacity="0"><use href="#logo" x="-110" y="-110" width="220" height="220"/></g></svg></div>FRONT</div>
+          <div class="view"><div class="box"><svg class="mini" viewBox="0 0 600 640"><use class="m-fill" href="#tee" fill="#d6d6d3"/></svg></div>BACK</div>
+          <div class="view"><div class="box dark"><svg width="90" height="90" viewBox="0 0 48 48" fill="none" stroke="#d8bd78" stroke-width="3.5"><circle cx="21" cy="21" r="13"/><path d="M31 31 L42 42 M21 15 V27 M15 21 H27"/></svg></div>ZOOM</div>
+          <div class="view"><div class="box dark"><svg width="90" height="90" viewBox="0 0 48 48" fill="none" stroke="#d8bd78" stroke-width="3.5"><path d="M24 4 L42 14 V34 L24 44 L6 34 V14 Z M6 14 L24 24 L42 14 M24 24 V44"/></svg></div>3D VIEW</div>
+        </div>
+        <div class="actions"><div id="btnCentre">CENTRE</div><div>BRING FORWARD</div><div>REMOVE</div></div>
+        <div class="tip">Drag to move · Corner handle to resize &amp; rotate · Dotted line shows the print area.</div>
+        <div class="crumb">SHOP ALL &nbsp;/&nbsp; CURATED PICKS</div>
+        <div class="ptitle">Cotton Tee</div>
+        <div class="price">$40.95</div>
+        <div class="made">PRINTED IN AUSTRALIA · FAST DELIVERY</div>
+        <div class="tax">Tax included. Printed to order in Australia.</div>
+        <div class="label" id="colourLabel">COLOUR: <span id="colourName">Ash</span></div>
+        <div class="swatches" id="swatches"></div>
+        <div class="label" id="sizeLabel">SIZE: <span id="sizeName">S</span><u>SIZE GUIDE</u></div>
+        <div class="sizes">
+          <div class="sz sel" id="sz-S">S</div><div class="sz" id="sz-M">M</div><div class="sz" id="sz-L">L</div><div class="sz" id="sz-XL">XL</div>
+          <div class="sz" id="sz-2XL">2XL</div><div class="sz" id="sz-3XL">3XL</div><div class="sz out">4XL</div><div class="sz out">5XL</div>
+        </div>
+        <div id="btnATC">ADD TO CART · $40.95</div>
+        <div id="tabs">
+          <div class="tabrow"><div class="tab on" id="tabTpl">TEMPLATES</div><div class="tab">ADD TEXT</div><div class="tab" id="tabUpload">UPLOAD<br>IMAGE</div></div>
+          <div class="panel" id="panelTpl">
+            <p>Pick a ready-made layout, then fill in your words or add a photo.</p>
+            <div class="tpls">
+              <div class="tpl sel"><div class="art"><svg width="200" height="200" viewBox="190 190 220 220"><use href="#sampleArt" width="600" height="640" style="filter:brightness(.25)"/></svg></div>Name &amp; year</div>
+              <div class="tpl"><div class="art"><span class="serif" style="font-size:64px;font-weight:600">A &amp; J</span></div>Monogram</div>
+              <div class="tpl"><div class="art"><span class="serif" style="font-size:64px;font-weight:600">S</span></div>Circle badge</div>
+            </div>
+          </div>
+          <div class="panel" id="panelUp" style="display:none">
+            <p>Upload a logo or photo. PNGs with a transparent background look best.</p>
+            <div class="dz" id="dz"><div class="big">Drop your file here</div><div class="small">PNG · JPG · up to 20MB</div><div id="chooseFile">CHOOSE FILE</div></div>
+            <div class="uploaded" id="uploaded" style="display:none"><div class="th"><svg width="120" height="120"><use href="#logo" width="120" height="120"/></svg></div>
+              <div><b>bluegum-logo.png</b><div class="ok">✓ Added to front</div></div></div>
           </div>
         </div>
-        <div class="progress" id="prog"><i id="progBar"></i></div>
-        <div class="ptext" id="ptext">Uploading bluegum-logo.png…</div>
+        <div style="height:600px"></div>
       </div>
 
-      <div class="scrim" id="scrimSz"></div>
-      <div class="sheet" id="sheetSz">
-        <div class="grab"></div>
-        <h3>Sizes for the team</h3>
-        <div class="hint">Mix and match sizes on the same design</div>
-        <div class="sizes">
-          <div class="srow"><div class="sz">S</div><div class="stepper"><div class="b">−</div><div class="n" id="n-S">0</div><div class="b plus" id="plus-S">+</div></div></div>
-          <div class="srow"><div class="sz">M</div><div class="stepper"><div class="b">−</div><div class="n" id="n-M">0</div><div class="b plus" id="plus-M">+</div></div></div>
-          <div class="srow"><div class="sz">L</div><div class="stepper"><div class="b">−</div><div class="n" id="n-L">0</div><div class="b plus" id="plus-L">+</div></div></div>
-          <div class="srow"><div class="sz">XL</div><div class="stepper"><div class="b">−</div><div class="n" id="n-XL">0</div><div class="b plus" id="plus-XL">+</div></div></div>
+      <div id="stickyHeader"><div class="header" style="border-bottom:2px solid transparent" id="hdr">
+        <div class="ico"><svg><use href="#i-burger"/></svg></div><div class="ico"><svg><use href="#i-search"/></svg></div>
+        <div class="wordmark"><svg width="64" height="64"><use href="#clmark"/></svg>CUSTOMISE LAB</div>
+        <div class="ico"><svg><use href="#i-user"/></svg></div><div class="ico" id="bagIcon"><svg><use href="#i-bag"/></svg></div>
+      </div></div>
+
+      <div id="live"><svg class="mirror" viewBox="60 20 480 420"><use class="m-fill" href="#tee" fill="#d6d6d3"/><use class="m-sample" href="#sampleArt" width="600" height="640"/><g class="m-logo" opacity="0"><use href="#logo" x="-110" y="-110" width="220" height="220"/></g></svg><div class="bar">LIVE PREVIEW</div></div>
+
+      <div class="scrim" id="scrimPh"></div>
+      <div id="photos">
+        <div class="top"><span>Cancel</span><b>Photo Library</b><span>Add</span></div>
+        <div class="pgrid">
+          <div class="ph" style="background:linear-gradient(135deg,#9ad0ec,#3d7ea6)"></div>
+          <div class="ph" style="background:linear-gradient(160deg,#f6d365,#fda085)"></div>
+          <div class="ph" id="photoLogo"><svg viewBox="0 0 220 220"><use href="#logo" width="220" height="220"/></svg><div id="photoRing"></div><div id="photoCheck"></div></div>
+          <div class="ph" style="background:linear-gradient(140deg,#c3e88d,#5b8c3a)"></div>
+          <div class="ph" style="background:linear-gradient(120deg,#d4c1ec,#7b5ea7)"></div>
+          <div class="ph" style="background:linear-gradient(150deg,#555,#222)"></div>
+          <div class="ph" style="background:linear-gradient(130deg,#f8b4b4,#c75c5c)"></div>
+          <div class="ph" style="background:linear-gradient(170deg,#e8dcc4,#a8916a)"></div>
+          <div class="ph" style="background:linear-gradient(110deg,#a1c4fd,#c2e9fb)"></div>
+          <div class="ph" style="background:linear-gradient(150deg,#2c3e50,#4ca1af)"></div>
+          <div class="ph" style="background:linear-gradient(135deg,#fbc2eb,#a6c1ee)"></div>
+          <div class="ph" style="background:linear-gradient(160deg,#fddb92,#d1fdff)"></div>
         </div>
-        <div class="totalrow"><span>Total</span><b id="qtyTotal">0 tees</b></div>
-        <div class="btn block" id="btnCart">Add to cart</div>
+        <div class="prog" id="prog"><i id="progBar"></i></div>
       </div>
-    </div>
 
-    <!-- CART -->
-    <div class="screen" id="cart">
-      <div class="nav"><div class="back">Continue shopping</div><div class="brand"><div class="mark">C</div></div><div class="burger"><i></i><i></i><i></i></div></div>
-      <div class="page-title">Your cart</div>
-      <div class="added"><div class="tick"></div><span id="addedText">12 tees added to your cart</span></div>
-      <div class="line-item">
-        <div class="img"><svg viewBox="0 0 600 640"><use href="#tee" fill="#161616"/><use href="#logo" x="231" y="171" width="138" height="138"/></svg></div>
-        <div><h4>Classic Cotton Tee</h4><p>Black · Custom front print<br>S×2 · M×4 · L×4 · XL×2</p></div>
+      <div class="scrim" id="scrimCart"></div>
+      <div id="cartDrawer">
+        <h3>YOUR CART <span>✕</span></h3>
+        <div class="added"><div class="tick"></div>Added to your cart</div>
+        <div class="item">
+          <div class="th"><svg class="mirror" viewBox="0 0 600 640"><use class="m-fill" href="#tee" fill="#d6d6d3"/><g class="m-logo" opacity="0"><use href="#logo" x="-110" y="-110" width="220" height="220"/></g></svg></div>
+          <div><h4>Cotton Tee</h4><p>Colour: <span class="cName">Black</span><br>Size: L · Custom front print</p><div class="pr">$40.95</div></div>
+        </div>
+        <div class="ship">FREE SHIPPING ON 2+ ITEMS · AUSTRALIA-WIDE</div>
+        <div id="btnCheckout">CHECKOUT</div>
       </div>
-      <div style="padding:60px 44px 0"><div class="btn block" id="btnCheckout">Checkout</div></div>
     </div>
   </div>
+
+  <div id="safari"><div class="round">‹</div><div class="pill"><span style="font-size:34px">▤</span>customiselab.com.au<span style="font-size:40px">↻</span></div><div class="round">•••</div></div>
 
   <div id="hook"><div class="t"><span class="pov">POV</span><br>the boss wants <em>team tees</em> with our logo…<br>by <em>Friday</em> 😳</div></div>
   <div id="cap"><div class="t" id="capText"></div></div>
@@ -342,13 +426,14 @@
 
   <div id="end">
     <div class="top"><h2>Your logo.<br><em>Your tee.</em></h2></div>
-    <svg id="endTee" viewBox="0 0 600 640"><use href="#tee" fill="#161616"/><use href="#logo" x="231" y="171" width="138" height="138"/></svg>
-    <div class="cta"><div class="url">customiselab.com.au</div><div class="btn">Design yours now →</div></div>
+    <svg id="endTee" class="mirror" viewBox="0 0 600 640"><use class="m-fill" href="#tee" fill="#161616"/><g class="m-logo" opacity="0"><use href="#logo" x="-110" y="-110" width="220" height="220"/></g></svg>
+    <div class="cta"><div class="url">customiselab.com.au</div><div class="sub">PRINTED IN AUSTRALIA · FREE SHIPPING ON 2+ ITEMS</div><div class="btn">PERSONALISE YOURS</div></div>
   </div>
 </div>
 
 <script>
 const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const inOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 const out = x => 1 - Math.pow(1 - x, 3);
@@ -370,116 +455,154 @@ function track(t, keys, e = inOut) {
   return keys[keys.length - 1][1];
 }
 
-const DURATION = 30;
+const DURATION = 28;
 
-// Size taps: [time, size]
-const SIZE_TAPS = [];
-[['S', 2], ['M', 4], ['L', 4], ['XL', 2]].reduce((t, [s, n]) => {
-  for (let i = 0; i < n; i++) { SIZE_TAPS.push([t, s]); t += 0.2; }
-  return t + 0.12;
-}, 20.7);
-
-// Finger path. Each key: [time, target] where target is a selector or [x, y].
-const FINGER = [
-  [4.4, [760, 1500]], [5.3, '#cta'], [5.75, '#cta'],
-  [6.6, [700, 1250]], [7.3, '#cardClassic'], [7.85, '#cardClassic'],
-  [8.6, [760, 1600]], [8.95, '#sw-navy'], [9.5, '#sw-navy'], [9.85, '#sw-black'], [10.6, '#sw-black'],
-  [11.25, '#toolUpload'], [11.6, '#toolUpload'], [12.45, '#thumbLogo'], [13.3, '#thumbLogo'],
-  [14.6, [820, 1060]], [15.15, '#shirtLogo'], [16.3, '#shirtLogo'], [16.65, '#handleBR'], [17.6, '#handleBR'],
-  [18.3, [900, 1400]], [19.8, '#btnSizes'],
-  ...SIZE_TAPS.flatMap(([t, s]) => [[t - 0.08, '#plus-' + s], [t + 0.05, '#plus-' + s]]),
-  [23.8, '#btnCart'], [24.2, '#btnCart'], [25.0, '#btnCheckout'], [26.0, '#btnCheckout'],
+// Voiceover: [start, spoken text]. voice.py synthesises these; each must finish before the next starts.
+const VO = [
+  [0.15, 'POV: the boss wants team tees with our logo... by Friday.'],
+  [3.7, 'So I jumped on Customise Lab.'],
+  [6.3, 'Grabbed the cotton tee,'],
+  [8.6, 'picked black,'],
+  [10.0, 'and uploaded our logo. Literally just a PNG.'],
+  [13.4, "Drag it, resize it, centre it. The live preview shows exactly how it'll print."],
+  [18.2, "Pick your size, add to cart, and it's printed right here in Australia."],
+  [23.3, 'Customise Lab dot com dot A U. Your logo. Your tee.'],
 ];
-const TAPS = [5.6, 7.7, 9.25, 10.05, 11.5, 12.75, 19.9, ...SIZE_TAPS.map(x => x[0]), 24.0, 25.6];
-// Moments the soundtrack should accent
-const SFX = { taps: TAPS, whoosh: [5.8, 7.9, 24.1, 26.4], pop: [13.95], ding: [24.25] };
-window.TIMELINE = { DURATION, SFX };
-
 const CAPS = [
-  [3.0, 4.9, 'So I tried <em>customiselab.com.au</em>'],
-  [4.9, 6.3, 'Hit “Start designing”'],
-  [6.3, 8.3, 'Pick your tee 👕'],
-  [8.3, 11.1, 'Choose a colour'],
-  [11.1, 15.0, 'Upload your logo — <em>any PNG works</em>'],
-  [15.0, 18.0, 'Drag it, resize it 👌'],
-  [18.0, 19.7, 'Honestly? <em>So clean.</em>'],
-  [19.7, 23.6, 'Add sizes for the whole team'],
-  [23.6, 26.4, 'Add to cart. <em>Done.</em> ✅'],
+  [3.6, 6.2, 'So I jumped on <em>Customise Lab</em>'],
+  [6.2, 8.5, 'Grabbed the cotton tee 👕'],
+  [8.5, 9.9, 'Picked black 🖤'],
+  [9.9, 13.2, 'Uploaded our logo — <em>just a PNG</em>'],
+  [13.2, 15.6, 'Drag it, resize it, centre it'],
+  [15.6, 17.9, 'Live preview = <em>exactly</em> how it prints'],
+  [17.9, 20.2, 'Pick your size → add to cart'],
+  [20.2, 22.8, 'Printed in <em>Australia</em> 🇦🇺'],
 ];
+
+const SWATCHES = [['Ash', '#d6d6d3'], ['Black', '#161616'], ['Charcoal', '#45464a'], ['Brown', '#3b2a22'], ['Forest', '#2f4a33'], ['Graphite', '#5a5b5e'],
+  ['Red', '#b54a4c'], ['Natural', '#efe7d8'], ['Navy', '#1c2236'], ['Sand', '#d6c6a6'], ['Sport Grey', '#a6a6a6'], ['White', '#f8f8f6']];
+$('#swatches').innerHTML = SWATCHES.map(([n, c]) => `<div class="sw" id="sw-${n.replace(' ', '')}" style="background:${c}"></div>`).join('');
+
+// Finger path. Each key: [time, target] where target is a selector or [x, y] in stage pixels.
+const FINGER = [
+  [3.7, [760, 1500]], [4.3, '#prevArrow'], [4.6, '#prevArrow'], [5.2, '#cc0'], [5.6, '#cc0'],
+  [6.4, [800, 1300]], [7.3, [820, 1200]], [8.75, '#sw-Black'], [9.3, '#sw-Black'],
+  [10.1, '#tabUpload'], [10.4, '#tabUpload'], [10.8, '#chooseFile'], [11.1, '#chooseFile'], [11.75, '#photoLogo'], [12.3, '#photoLogo'],
+  [13.0, [760, 1300]], [14.0, '#shirtLogo'], [14.9, '#shirtLogo'], [15.15, '#handleBR'], [16.05, '#handleBR'],
+  [16.45, '#btnCentre'], [17.1, '#btnCentre'], [18.0, [700, 1200]], [18.95, '#sz-L'], [19.3, '#sz-L'],
+  [19.75, '#btnATC'], [20.2, '#btnATC'], [21.6, '#btnCheckout'],
+];
+const TAPS = [4.45, 5.45, 9.0, 10.3, 10.95, 11.9, 16.6, 19.1, 19.9, 22.3];
+const DRAGS = [[14.05, 14.95], [15.2, 16.1]];
+// Moments the soundtrack should accent
+const SFX = { taps: TAPS, whoosh: [4.5, 5.6, 11.05, 20.05, 22.7], pop: [12.85], ding: [20.45] };
+window.TIMELINE = { DURATION, VO, SFX };
 
 function rectCenter(sel) {
   const r = $(sel).getBoundingClientRect();
   return [r.left + r.width / 2, r.top + r.height / 2];
 }
-function resolve(target) { return typeof target === 'string' ? rectCenter(target) : target; }
+const resolve = target => typeof target === 'string' ? rectCenter(target) : target;
+// page-space y of an element inside #page (measured once, page unscrolled)
+// (re-measured every frame so web-font loading can't leave stale offsets)
+const pageY = {};
+const measure = () => { for (const id of ['#canvas', '#colourLabel', '#sizeLabel', '#tabs']) pageY[id] = $(id).getBoundingClientRect().top - $('#page').getBoundingClientRect().top; };
+// scroll so that the anchor sits at screen-y (viewport starts at 64px)
+const at = (id, screenY) => pageY[id] - (screenY - 64);
 
-let lastCap = '';
+let lastCap = '', lastScroll = null;
 window.render = function (t) {
-  // --- screens (slide transitions) ---
-  const x = (a, b) => (1 - seg(t, a, b)) * 1080; // enter from right
-  const homeOut = seg(t, 5.8, 6.15), shopOut = seg(t, 7.9, 8.25), desOut = seg(t, 24.1, 24.45);
+  measure();
+  // --- screens ---
+  const homeOut = seg(t, 5.6, 5.95);
   $('#home').style.transform = `translateX(${-homeOut * 1080}px)`;
-  $('#shop').style.transform = `translateX(${x(5.8, 6.15) - shopOut * 1080}px)`;
-  $('#designer').style.transform = `translateX(${x(7.9, 8.25) - desOut * 1080}px)`;
-  $('#cart').style.transform = `translateX(${x(24.1, 24.45)}px)`;
-  $('#url').innerHTML = t < 5.95 ? '<b>customiselab.com.au</b>'
-    : t < 8.05 ? '<b>customiselab.com.au</b>/t-shirts'
-    : t < 24.25 ? '<b>customiselab.com.au</b>/design'
-    : '<b>customiselab.com.au</b>/cart';
+  $('#product').style.transform = `translateX(${(1 - homeOut) * 1080}px)`;
 
-  // home scroll
-  $('#homeScroll').style.transform = `translateY(${-track(t, [[3.3, 0], [4.4, 300]])}px)`;
+  // carousel: hoodie centred, "prev" tap slides the tee into the middle
+  const slide = seg(t, 4.5, 5.0);
+  const centre = 1 - slide; // index of the centred card, 1 -> 0
+  ['#cc0', '#cc1', '#cc2'].forEach((id, i) => {
+    const d = i - centre;
+    const s = 1 - Math.min(Math.abs(d), 1) * 0.12;
+    $(id).style.left = (200 + d * 760) + 'px';
+    $(id).style.transform = `scale(${s})`;
+    $(id).style.zIndex = 10 - Math.round(Math.abs(d) * 2);
+  });
+  const onTee = t >= 4.75;
+  $('#cName').textContent = onTee ? 'Cotton Tee' : 'Classic Heavy Blend Hoodie';
+  $('#cPrice').textContent = onTee ? 'FROM $40.95' : 'FROM $50.95';
+  $('#pg').textContent = onTee ? '1' : '2';
+  $('#cName').style.opacity = $('#cPrice').style.opacity = 1 - Math.sin(Math.PI * seg(t, 4.5, 5.0, x => x)) * 0.9;
+  $('#cc0').style.transform += ` scale(${t > 5.4 && t < 5.6 ? 0.96 : 1})`;
+
+  // --- product page scroll ---
+  const scroll = track(t, [[7.3, 0], [8.3, at('#colourLabel', 560)], [9.4, at('#colourLabel', 560)], [10.0, at('#tabs', 470)],
+    [13.1, at('#tabs', 470)], [13.8, at('#canvas', 236)], [17.9, at('#canvas', 236)], [18.6, at('#sizeLabel', 600)]]);
+  if (scroll !== lastScroll) { $('#page').style.transform = `translateY(${-scroll}px)`; lastScroll = scroll; }
+  $('#stickyHeader').style.transform = `translateY(${Math.max(0, 110 - scroll)}px)`;
+  $('#hdr').style.borderBottomColor = scroll > 110 ? 'var(--line)' : 'transparent';
+  // live preview chip floats in while the canvas is off-screen
+  const canvasBottom = 64 + pageY['#canvas'] + 980 - scroll;
+  const liveOn = clamp((400 - canvasBottom) / 200, 0, 1) * (1 - seg(t, 19.9, 20.1));
+  $('#live').style.opacity = liveOn;
+  $('#live').style.transform = `translateY(${(1 - liveOn) * -30}px)`;
 
   // --- colour ---
-  let col = '#ffffff', name = 'White', sel = 'white';
-  if (t >= 9.25) { col = mix('#ffffff', '#1d2a44', seg(t, 9.25, 9.5)); name = 'Navy'; sel = 'navy'; }
-  if (t >= 10.05) { col = mix('#1d2a44', '#161616', seg(t, 10.05, 10.3)); name = 'Black'; sel = 'black'; }
-  $('#bigTeeFill').setAttribute('fill', col);
+  let col = '#d6d6d3', name = 'Ash';
+  if (t >= 9.0) { col = mix('#d6d6d3', '#161616', seg(t, 9.0, 9.25)); name = 'Black'; }
+  $$('.m-fill').forEach(u => { if (!u.closest('#endTee')) u.setAttribute('fill', col); });
   $('#colourName').textContent = name;
-  document.querySelectorAll('.sw').forEach(s => s.classList.toggle('sel', s.id === 'sw-' + sel));
+  $$('.sw').forEach(s => s.classList.toggle('sel', s.id === 'sw-' + name));
 
-  // --- upload sheet ---
-  const upIn = seg(t, 11.55, 11.9, out), upOut = seg(t, 13.5, 13.85);
-  const up = upIn * (1 - upOut);
-  $('#sheetUp').style.transform = `translateY(${(1 - up) * 110}%)`;
-  $('#scrimUp').style.opacity = up;
-  $('#thumbRing').style.opacity = t > 12.75 ? 1 : 0;
-  $('#thumbLogo').style.transform = `scale(${t > 12.7 && t < 12.9 ? 0.94 : 1})`;
-  const pr = seg(t, 12.85, 13.4, x => x);
-  $('#prog').style.opacity = $('#ptext').style.opacity = t > 12.8 ? 1 : 0;
-  $('#progBar').style.width = (pr * 100) + '%';
-  $('#ptext').textContent = pr >= 1 ? 'Uploaded ✓' : 'Uploading bluegum-logo.png…';
+  // --- upload ---
+  const upTab = t >= 10.3;
+  $('#tabTpl').classList.toggle('on', !upTab);
+  $('#tabUpload').classList.toggle('on', upTab);
+  $('#panelTpl').style.display = upTab ? 'none' : '';
+  $('#panelUp').style.display = upTab ? '' : 'none';
+  const done = t >= 12.7;
+  $('#dz').style.display = done ? 'none' : '';
+  $('#uploaded').style.display = done ? '' : 'none';
+  $('#chooseFile').style.transform = `scale(${t > 10.9 && t < 11.05 ? 0.95 : 1})`;
+  const ph = seg(t, 11.05, 11.35, out) * (1 - seg(t, 12.55, 12.85));
+  $('#photos').style.transform = `translateY(${(1 - ph) * 105}%)`;
+  $('#scrimPh').style.opacity = ph;
+  $('#photoRing').style.opacity = $('#photoCheck').style.opacity = t >= 11.9 ? 1 : 0;
+  $('#prog').style.opacity = t >= 12.0 ? 1 : 0;
+  $('#progBar').style.width = seg(t, 12.0, 12.45, x => x) * 100 + '%';
 
-  // --- logo on shirt ---
-  const drop = seg(t, 13.9, 14.35, back);
-  const lx = track(t, [[15.3, 360], [16.2, 300]]);
-  const ly = track(t, [[15.3, 330], [16.2, 262]]);
-  const ls = track(t, [[16.75, 0.95], [17.55, 0.62]]) * (t < 14.35 ? Math.max(drop, 0.01) : 1);
-  $('#logoG').setAttribute('transform', `translate(${lx} ${ly}) scale(${ls})`);
-  $('#logoG').setAttribute('opacity', t >= 13.9 ? 1 : 0);
-  $('#selBox').setAttribute('opacity', t < 17.9 ? 1 : 1 - seg(t, 17.9, 18.1));
-  $('#selBox').querySelectorAll('circle').forEach(c => c.setAttribute('r', 11 / Math.max(ls, .3)));
-  $('#selBox').querySelector('rect').setAttribute('stroke-width', 3 / Math.max(ls, .3));
-  $('#printArea').setAttribute('opacity', t > 14.3 && t < 18 ? 0.8 * (1 - seg(t, 17.7, 18)) : 0);
-  const zoom = track(t, [[18.0, 1], [18.8, 1.1], [19.5, 1.1], [19.9, 1]]);
-  $('#bigTee').style.transform = `scale(${zoom})`;
+  // --- design on the tee ---
+  const hasLogo = t >= 12.85;
+  const pop = seg(t, 12.85, 13.25, back);
+  const lx = track(t, [[14.1, 345], [14.9, 285], [16.6, 285], [16.9, 300]]);
+  const ly = track(t, [[14.1, 360], [14.9, 250], [16.6, 250], [16.9, 300]]);
+  const ls = track(t, [[15.25, 0.9], [16.05, 0.7]]) * (hasLogo ? Math.max(pop, 0.01) : 1);
+  const tf = `translate(${lx} ${ly}) scale(${ls})`;
+  $$('.m-logo').forEach(g => {
+    // end card + cart always show the finished design
+    const final = g.closest('#endTee') || g.closest('#cartDrawer');
+    g.setAttribute('transform', final ? 'translate(300 300) scale(0.7)' : tf);
+    g.setAttribute('opacity', final || hasLogo ? 1 : 0);
+  });
+  $$('.m-sample').forEach(u => u.setAttribute('opacity', hasLogo ? 0 : 1));
+  const selOp = t < 17.2 ? 1 : 1 - seg(t, 17.2, 17.4);
+  $('#selBox').setAttribute('opacity', selOp);
+  $$('#selBox circle').forEach(c => c.setAttribute('r', 11 / Math.max(ls, .3)));
+  $('#selBox rect').setAttribute('stroke-width', 3 / Math.max(ls, .3));
+  $('#btnCentre').style.background = t > 16.55 && t < 16.8 ? '#ece3d0' : '';
 
-  // --- sizes sheet ---
-  const szIn = seg(t, 20.0, 20.35, out), szOut = seg(t, 24.0, 24.3);
-  const sz = szIn * (1 - szOut);
-  $('#sheetSz').style.transform = `translateY(${(1 - sz) * 110}%)`;
-  $('#scrimSz').style.opacity = sz;
-  const counts = { S: 0, M: 0, L: 0, XL: 0 };
-  SIZE_TAPS.forEach(([tt, s]) => { if (t >= tt) counts[s]++; });
-  let total = 0;
-  for (const s in counts) { $('#n-' + s).textContent = counts[s]; total += counts[s]; }
-  $('#qtyTotal').textContent = total + (total === 1 ? ' tee' : ' tees');
-  $('#btnCart').style.transform = `scale(${t > 23.95 && t < 24.1 ? 0.96 : 1})`;
-  $('#cta').style.transform = `scale(${t > 5.55 && t < 5.75 ? 0.95 : 1})`;
-  $('#btnSizes').style.transform = `scale(${t > 19.85 && t < 20.0 ? 0.96 : 1})`;
+  // --- size + cart ---
+  const size = t >= 19.1 ? 'L' : 'S';
+  $('#sizeName').textContent = size;
+  $$('.sz').forEach(s => s.classList.toggle('sel', s.id === 'sz-' + size));
+  $('#btnATC').style.transform = `scale(${t > 19.85 && t < 20.0 ? 0.97 : 1})`;
+  const cart = seg(t, 20.05, 20.45, out);
+  $('#cartDrawer').style.transform = `translateX(${(1 - cart) * 105}%)`;
+  $('#scrimCart').style.opacity = cart;
+  $('#btnCheckout').style.transform = `scale(${t > 22.25 && t < 22.4 ? 0.97 : 1})`;
 
   // --- hook / captions ---
-  $('#hook').style.opacity = 1 - seg(t, 2.7, 3.0);
+  $('#hook').style.opacity = 1 - seg(t, 3.2, 3.5);
   $('#hook .t').style.transform = `scale(${lerp(0.9, 1, seg(t, 0, 0.35, back))})`;
   const c = CAPS.find(([a, b]) => t >= a && t < b);
   const capEl = $('#capText');
@@ -502,8 +625,8 @@ window.render = function (t) {
       break;
     }
   }
-  const fingerOn = seg(t, 4.4, 4.7) * (1 - seg(t, 26.0, 26.3));
-  const pressing = TAPS.some(tt => t >= tt - 0.06 && t < tt + 0.1) || (t > 15.2 && t < 16.3) || (t > 16.7 && t < 17.6);
+  const fingerOn = seg(t, 3.6, 3.9) * (1 - seg(t, 22.5, 22.8));
+  const pressing = TAPS.some(tt => t >= tt - 0.06 && t < tt + 0.1) || DRAGS.some(([a, b]) => t > a && t < b);
   const f = $('#finger');
   f.style.opacity = fingerOn;
   f.style.transform = `translate(${fx}px, ${fy}px) scale(${pressing ? 0.8 : 1})`;
@@ -514,11 +637,10 @@ window.render = function (t) {
   rip.style.transform = `translate(${fx}px, ${fy}px) scale(${lerp(0.6, 2.2, out(clamp(rp, 0, 1)))})`;
 
   // --- end card ---
-  const e = seg(t, 26.4, 26.9);
-  $('#end').style.opacity = e;
-  $('#end .top').style.transform = `translateY(${(1 - seg(t, 26.5, 27.1, back)) * 60}px)`;
-  $('#endTee').style.transform = `translateY(${Math.sin(t * 2.2) * 14}px) rotate(${Math.sin(t * 1.4) * 2.5}deg) scale(${lerp(0.85, 1, seg(t, 26.4, 27.2, back))})`;
-  $('#end .btn').style.transform = `scale(${1 + Math.max(0, Math.sin((t - 27.5) * 5)) * 0.04 * (t > 27.5 ? 1 : 0)})`;
+  $('#end').style.opacity = seg(t, 22.7, 23.2);
+  $('#end .top').style.transform = `translateY(${(1 - seg(t, 22.8, 23.4, back)) * 60}px)`;
+  $('#endTee').style.transform = `translateY(${Math.sin(t * 2.2) * 14}px) rotate(${Math.sin(t * 1.4) * 2.5}deg) scale(${lerp(0.85, 1, seg(t, 22.7, 23.5, back))})`;
+  $('#end .btn').style.transform = `scale(${1 + (t > 25 ? Math.max(0, Math.sin((t - 25) * 5)) * 0.04 : 0)})`;
 };
 
 // preview mode: open scene.html?play in a browser to watch it in real time

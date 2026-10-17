@@ -1,6 +1,7 @@
-"""Synthesises a royalty-free upbeat music bed plus tap/whoosh/pop/ding SFX for the reel.
+"""Synthesises a royalty-free upbeat music bed plus tap/whoosh/pop/ding SFX for the reel,
+and mixes in the voiceover (if given) with the music ducked under speech.
 
-Usage: python3 audio.py build/timeline.json build/audio.wav
+Usage: python3 audio.py build/timeline.json build/audio.wav [build/voice.wav]
 """
 import json
 import sys
@@ -109,9 +110,21 @@ for t in ev["ding"]:
     for m, delay in ((84, 0), (88, 0.09), (91, 0.18)):
         add(sfx, t + delay, tone(midi(m), 0.9, 0.35, "sine", 0.22))
 
-mix = music * 0.55 + sfx
+music /= max(1e-9, np.abs(music).max())
+voice = np.zeros(n)
+if len(sys.argv) > 3:
+    with wave.open(sys.argv[3]) as w:
+        assert w.getframerate() == SR
+        v = np.frombuffer(w.readframes(w.getnframes()), np.int16) / 32768
+    voice[: min(n, len(v))] = v[:n]
+# duck the music while someone is talking (smoothed speech envelope)
+win = int(0.25 * SR)
+speech = np.convolve(np.abs(voice), np.ones(win) / win, "same")
+duck = 1 - 0.55 * np.clip(speech / 0.04, 0, 1)
+
+mix = music * 0.42 * duck + sfx * 0.7 + voice * 0.95
 fade = np.ones(n)
-fl = int(1.2 * SR)
+fl = int(0.8 * SR)
 fade[-fl:] = np.linspace(1, 0, fl)
 mix *= fade
 mix /= max(1e-9, np.abs(mix).max()) / 0.89
